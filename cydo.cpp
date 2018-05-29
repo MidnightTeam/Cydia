@@ -32,6 +32,11 @@
 
 #include <Menes/Function.h>
 
+#define LIBJAILBREAK "/usr/lib/libjailbreak.dylib"
+
+/* Set platform binary flag */
+#define FLAG_PLATFORMIZE (1 << 1)
+
 typedef Function<void, const char *, launch_data_t> LaunchDataIterator;
 
 void launch_data_dict_iterate(launch_data_t data, LaunchDataIterator code) {
@@ -40,7 +45,33 @@ void launch_data_dict_iterate(launch_data_t data, LaunchDataIterator code) {
     }, &code);
 }
 
+void platformize() {
+    if (access(LIBJAILBREAK, F_OK) != 0) {
+        fprintf(stderr, "Unable to find libjailbreak!");
+        return;
+    }
+    
+    void *handle = dlopen(LIBJAILBREAK, RTLD_LAZY);
+    if (!handle) return;
+    
+    // Reset errors
+    dlerror();
+    
+    typedef void (*fix_entitle_ptr_t)(pid_t pid, uint32_t flags);
+    fix_entitle_ptr_t entitleptr = (fix_entitle_ptr_t)dlsym(handle, "jb_oneshot_entitle_now");
+    
+    const char *dlsym_error = dlerror();
+    if (dlsym_error) {
+        fprintf(stderr, dlsym_error);
+        return;
+    }
+    
+    entitleptr(getpid(), FLAG_PLATFORMIZE);
+}
+
 int main(int argc, char *argv[]) {
+    platformize();
+    
     auto request(launch_data_new_string(LAUNCH_KEY_GETJOBS));
     auto response(launch_msg(request));
     launch_data_free(request);
