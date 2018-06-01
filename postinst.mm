@@ -27,7 +27,8 @@ void Finish(const char *finish) {
 }
 
 static bool setnsfpn(const char *path) {
-    return system([[NSString stringWithFormat:@"/usr/libexec/cydia/setnsfpn %s", path] UTF8String]) == 0;
+    // return system([[NSString stringWithFormat:@"/usr/libexec/cydia/setnsfpn %s", path] UTF8String]) == 0;
+    return true;
 }
 
 enum StashStatus {
